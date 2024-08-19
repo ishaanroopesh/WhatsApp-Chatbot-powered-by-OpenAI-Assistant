@@ -1,0 +1,23 @@
+CREATING A VIRTUAL ENVIRONMENT
+    python -m venv <environment_name>
+
+ACTIVATING A VIRTUAL ENVIRONMENT
+    source <environment_name>/bin/activate
+
+DEACTIVATING A VIRTUAL ENVIRONMENT
+    deactivate
+
+The modules installed under the virtual environment are seperate from the ones already installed on the system. using "pip list", while in different environments helps us to understand the differences. The new modules to be installed must be done within the virtual environment.
+
+INTERACTIVE ENVIRONMENT TESTING
+    make sure to change your interactive environment to the virtual environment that was created. This allows to use the specific packages that were downloaded for the project.
+
+
+NGROK SETUP
+    once you create an account with ngrok, claim the free static domain. Download the executable file and store it along with the other system level executeable files on your system. (MAC - users/<username>/anaconda3/bin/)
+
+    setup the authentication token for ngrok in the terminal - 
+    ngrok config add-authtoken 2gPaiWPpwZOTE1oEIwXE2UD5Ch2_4s9oY7N1YSYeW6LYSCtNF
+
+    open up the static domina using
+    ngrok http --domain=oarfish-main-pony.ngrok-free.app 8080

@@ -18,10 +18,7 @@ def handle_message():
 
     This function processes incoming WhatsApp messages and other events,
     such as delivery statuses. If the event is a valid message, it gets
-    processed. If the incoming payload is not a recognized WhatsApp event,
-    an error is returned.
-
-    Every message send will trigger 4 HTTP requests to your webhook: message, sent, delivered, read.
+    processed.
 
     Returns:
         response: A tuple containing a JSON response and an HTTP status code.
@@ -54,7 +51,7 @@ def handle_message():
         return jsonify({"status": "error", "message": "Invalid JSON provided"}), 400
 
 
-# Required webhook verifictaion for WhatsApp
+# Required webhook verification for WhatsApp
 def verify():
     # Parse params from the webhook verification request
     mode = request.args.get("hub.mode")
@@ -85,5 +82,4 @@ def webhook_get():
 @signature_required
 def webhook_post():
     return handle_message()
-
 
