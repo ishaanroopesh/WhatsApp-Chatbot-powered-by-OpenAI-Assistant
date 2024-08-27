@@ -1,45 +1,66 @@
+
 from openai import OpenAI
 import shelve
 from dotenv import load_dotenv
 import os
 import time
+import logging
 
 load_dotenv()
-OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
-client = OpenAI(api_key=OPEN_AI_API_KEY)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_ASSISTANT_ID = os.getenv("OPENAI_ASSISTANT_ID")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-
+print(OPENAI_API_KEY)
 # --------------------------------------------------------------
 # Upload file
 # --------------------------------------------------------------
-def upload_file(path):
-    # Upload a file with an "assistants" purpose
-    file = client.files.create(file=open(path, "rb"), purpose="assistants")
-    return file
+# def upload_file(path):
+#     # Upload a file with an "assistants" purpose
+#     file = client.files.create(file=open(path, "rb"), purpose="assistants")
+#     return file
 
 
-file = upload_file("../data/airbnb-faq.pdf")
+# file = upload_file("../data/airbnb-faq.pdf")
 
+
+# Create a vector store
+vector_store = client.beta.vector_stores.create(name="Hotel FAQs")
+ 
+# Ready the files for upload to OpenAI
+file_paths = ["../data/airbnb-faq.pdf", "../data/Brief_FAQ_for_first-time_Airbnb_users.pdf", "../data/How_to_Ask_for_a_Budget_Property_on_Airbnb.pdf", "../data/How_to_Ask_for_the_Best_Budget_Value_Property_on_Airbnb.pdf"]
+file_streams = [open(path, "rb") for path in file_paths]
+ 
+# Use the upload and poll SDK helper to upload the files, add them to the vector store,
+# and poll the status of the file batch for completion.
+file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
+  vector_store_id=vector_store.id, files=file_streams
+)
+ 
+# You can print the status and the file counts of the batch to see the result of this operation.
+print(file_batch.status)
+print(file_batch.file_counts)
 
 # --------------------------------------------------------------
 # Create assistant
 # --------------------------------------------------------------
-def create_assistant(file):
-    """
-    You currently cannot set the temperature for Assistant via the API.
-    """
+
+def create_assistant():
     assistant = client.beta.assistants.create(
         name="WhatsApp AirBnb Assistant",
         instructions="You're a helpful WhatsApp assistant that can assist guests that are staying in our Paris AirBnb. Use your knowledge base to best respond to customer queries. If you don't know the answer, say simply that you cannot help with question and advice to contact the host directly. Be friendly and funny.",
-        tools=[{"type": "retrieval"}],
         model="gpt-4-1106-preview",
-        file_ids=[file.id],
+        tools=[{"type": "file_search"}],
     )
     return assistant
 
+# Create the assistant
+assistant = create_assistant()
 
-assistant = create_assistant(file)
-
+assistant = client.beta.assistants.update(
+  assistant_id=assistant.id,
+  tool_resources={"file_search": {"vector_store_ids": [vector_store.id]}},
+)
 
 # --------------------------------------------------------------
 # Thread management
@@ -91,7 +112,7 @@ def generate_response(message_body, wa_id, name):
 # --------------------------------------------------------------
 def run_assistant(thread):
     # Retrieve the Assistant
-    assistant = client.beta.assistants.retrieve("asst_7Wx2nQwoPWSf710jrdWTDlfE")
+    assistant = client.beta.assistants.retrieve(assistant.id)
 
     # Run the assistant
     run = client.beta.threads.runs.create(
@@ -102,7 +123,7 @@ def run_assistant(thread):
     # Wait for completion
     while run.status != "completed":
         # Be nice to the API
-        time.sleep(0.5)
+        time.sleep(15)
         run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
 
     # Retrieve the Messages
