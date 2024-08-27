@@ -13,7 +13,7 @@ def whatsapp_reply():
     response = MessagingResponse()
     incoming_msg = request.form.get('Body') # Content of the message
     wa_id = request.form.get('From')  # WhatsApp sender ID
-    name = "Ishaan"
+    name = "ABCD" #Enter your name here or extract it from the message
 
     print(f"Received message from {wa_id}, {name}: {incoming_msg}")
 
